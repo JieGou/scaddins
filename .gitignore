@@ -77,3 +77,4 @@ tools/
 *.testsettings
 AngleOfSun.bundle
 SheetCopier.bundle
+.vs
