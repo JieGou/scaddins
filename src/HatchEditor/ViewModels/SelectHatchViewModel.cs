@@ -19,6 +19,7 @@ namespace SCaddins.HatchEditor.ViewModels
 {
     using System.Collections.ObjectModel;
     using System.Dynamic;
+    using System.Linq;
     using Autodesk.Revit.DB;
     using Caliburn.Micro;
 
@@ -72,12 +73,12 @@ namespace SCaddins.HatchEditor.ViewModels
 
         public void Cancel()
         {
-            TryClose(false);
+            TryCloseAsync(false);
         }
 
         public void Select()
         {
-            TryClose(true);
+            TryCloseAsync(true);
         }
     }
 }

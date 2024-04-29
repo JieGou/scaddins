@@ -12,7 +12,7 @@ namespace SCaddins.ExportManager {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.3.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.9.0.0")]
     public sealed partial class Settings1 : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings1 defaultInstance = ((Settings1)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings1())));
@@ -25,7 +25,7 @@ namespace SCaddins.ExportManager {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("\\\\SCAPP02\\FollowMeColour")]
+        [global::System.Configuration.DefaultSettingValueAttribute("\\\\SCPRINT01\\FollowME_Colour")]
         [global::System.Configuration.SettingsManageabilityAttribute(global::System.Configuration.SettingsManageability.Roaming)]
         public string A3PrinterDriver {
             get {
@@ -90,7 +90,7 @@ namespace SCaddins.ExportManager {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         [global::System.Configuration.SettingsManageabilityAttribute(global::System.Configuration.SettingsManageability.Roaming)]
         public bool HideTitleBlocks {
             get {
@@ -103,7 +103,7 @@ namespace SCaddins.ExportManager {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("\\\\SCAPP02\\DocuWide3035 (PS)")]
+        [global::System.Configuration.DefaultSettingValueAttribute("\\\\SCPRINT01\\DocuWide 3037 PS")]
         public string LargeFormatPrinterDriver {
             get {
                 return ((string)(this["LargeFormatPrinterDriver"]));
@@ -122,19 +122,6 @@ namespace SCaddins.ExportManager {
             }
             set {
                 this["NorthPointVisibilityParameter"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("\\\\SCAPP02\\DocuWide3035 (PS)")]
-        [global::System.Configuration.SettingsManageabilityAttribute(global::System.Configuration.SettingsManageability.Roaming)]
-        public string PSPrinterDriver {
-            get {
-                return ((string)(this["PSPrinterDriver"]));
-            }
-            set {
-                this["PSPrinterDriver"] = value;
             }
         }
         

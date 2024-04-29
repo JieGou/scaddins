@@ -1,4 +1,4 @@
-﻿// (C) Copyright 2018-2021 by Andrew Nicholas
+﻿// (C) Copyright 2018-2023 by Andrew Nicholas
 //
 // This file is part of SCaddins.
 //
@@ -28,7 +28,7 @@ namespace SCaddins.ExportManager.ViewModels
         private readonly Manager exportManager;
         private BindableCollection<string> fileNamingSchemes;
         private string selectedFileNamingScheme;
-        private SCaddins.ExportManager.ViewModels.SCexportViewModel exportManagerViewModel;
+        private SCexportViewModel exportManagerViewModel;
 
         public OptionsViewModel(Manager exportManager, SCexportViewModel exportManagerViewModel)
         {
@@ -77,7 +77,7 @@ namespace SCaddins.ExportManager.ViewModels
 
             set
             {
-                if (value == Settings1.Default.UseRasterPrinterParameter)
+                if (value == Settings1.Default.CustomSCExportParameter01)
                 {
                     return;
                 }
@@ -285,6 +285,7 @@ namespace SCaddins.ExportManager.ViewModels
                     exportManager.UseDateForEmptyRevisions = value;
                     Settings1.Default.UseDateForEmptyRevisions = value;
                     Settings1.Default.Save();
+                    NotifyOfPropertyChange(() => DateForEmptyRevisions);
                 }
             }
         }
@@ -304,11 +305,13 @@ namespace SCaddins.ExportManager.ViewModels
                     ExportPDF24 = false;
                     ExportRevitPDF = false;
                     NotifyOfPropertyChange(() => ExportAdobePDF);
+                    NotifyOfPropertyChange(() => EnableDateRevisions);
                 }
                 else
                 {
                     exportManagerViewModel.ExportPDF = false;
                     NotifyOfPropertyChange(() => ExportAdobePDF);
+                    NotifyOfPropertyChange(() => EnableDateRevisions);
                 }
             }
         }
@@ -328,27 +331,33 @@ namespace SCaddins.ExportManager.ViewModels
                     ExportAdobePDF = false;
                     ExportRevitPDF = false;
                     NotifyOfPropertyChange(() => ExportPDF24);
+                    NotifyOfPropertyChange(() => EnableDateRevisions);
                 }
                 else
                 {
                     exportManagerViewModel.ExportPDF24 = false;
                     NotifyOfPropertyChange(() => ExportPDF24);
+                    NotifyOfPropertyChange(() => EnableDateRevisions);
                 }
             }
         }
 
         public bool ExportAdobePDFEnabled
         {
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
             get { return false; }
 #else
-            get { return true; }
+            get { return exportManager.PDFSanityCheck(); }
 #endif
         }
 
         public bool ExportPDF24Enabled
         {
-            get { return true; }
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
+            get { return false; }
+#else
+            get { return exportManager.PDF24SanityCheck(); }
+#endif
         }
 
         public bool ExportDGN
@@ -403,7 +412,7 @@ namespace SCaddins.ExportManager.ViewModels
 
         public bool ExportRevitPDFEnabled
         {
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
             get { return true; }
 #else
             get { return false; }
@@ -412,7 +421,7 @@ namespace SCaddins.ExportManager.ViewModels
 
         public bool EnableDateRevisions
         {
-            get { return !ExportRevitPDFEnabled; }
+            get { return !ExportRevitPDF; }
         }
 
         public bool ExportRevitPDF
@@ -429,12 +438,20 @@ namespace SCaddins.ExportManager.ViewModels
                     exportManagerViewModel.ExportDirectPDF = true;
                     ExportPDF24 = false;
                     ExportAdobePDF = false;
+                    ForceDateForAllRevisions = false;
+                    DateForEmptyRevisions = false;
                     NotifyOfPropertyChange(() => ExportRevitPDF);
+                    NotifyOfPropertyChange(() => EnableDateRevisions);
+                    NotifyOfPropertyChange(() => DateForEmptyRevisions);
+                    NotifyOfPropertyChange(() => ForceDateForAllRevisions);
                 }
                 else
                 {
                     exportManagerViewModel.ExportDirectPDF = false;
                     NotifyOfPropertyChange(() => ExportRevitPDF);
+                    NotifyOfPropertyChange(() => EnableDateRevisions);
+                    NotifyOfPropertyChange(() => DateForEmptyRevisions);
+                    NotifyOfPropertyChange(() => ForceDateForAllRevisions);
                 }
             }
         }
@@ -532,11 +549,13 @@ namespace SCaddins.ExportManager.ViewModels
                     exportManager.ForceRevisionToDateString = value;
                     Settings1.Default.ForceDateRevision = value;
                     Settings1.Default.Save();
+                    NotifyOfPropertyChange(() => ForceDateForAllRevisions);
                 }
             }
         }
 
-        public bool HideTitleBlocksForCadExports
+        public bool HideTitleBlocksForCadExports => false;
+        /*public bool HideTitleBlocksForCadExports
         {
             get
             {
@@ -560,7 +579,7 @@ namespace SCaddins.ExportManager.ViewModels
                 Settings1.Default.HideTitleBlocks = value;
                 Settings1.Default.Save();
             }
-        }
+        }*/
 
         public string InvalidSheetNameCharsAsString
         {
@@ -665,11 +684,11 @@ namespace SCaddins.ExportManager.ViewModels
                 if (value == false)
                 {
                     var msg = "It is best to keep this on as it will give you visual feedback on sheets that may not export correctly."
-                        + System.Environment.NewLine
-                        + System.Environment.NewLine
+                        + Environment.NewLine
+                        + Environment.NewLine
                         + "Turn it off only if SCexport startup times are very slow:"
-                        + System.Environment.NewLine
-                        + System.Environment.NewLine
+                        + Environment.NewLine
+                        + Environment.NewLine
                         + "If turned off, you can manually verify sheets after opening SCexport by pressing 'V' or using the option in the context menu";
 
                     SCaddinsApp.WindowManager.ShowWarningMessageBox("Warnning", msg);
@@ -691,7 +710,7 @@ namespace SCaddins.ExportManager.ViewModels
             settings.SizeToContent = System.Windows.SizeToContent.WidthAndHeight;
             settings.ResizeMode = System.Windows.ResizeMode.CanResizeWithGrip;
             var printerViewModel = new PrinterSelectionViewModel(currentPrinter);
-            bool? result = SCaddinsApp.WindowManager.ShowDialog(printerViewModel, null, settings);
+            bool? result = SCaddinsApp.WindowManager.ShowDialogAsync(printerViewModel, null, settings);
             if (result.HasValue)
             {
                 return result.Value ? printerViewModel.SelectedPrinter : currentPrinter;

@@ -17,6 +17,7 @@
 
 namespace SCaddins.Common
 {
+    using System;
     using System.IO;
 
     internal class BasicDialogService : IDialogService
@@ -36,10 +37,12 @@ namespace SCaddins.Common
 
         public bool? ShowConfirmationDialog(string message, bool? defaultCheckboxValue, out bool checkboxResult)
         {
-            var confirmOverwriteDialog = new ExportManager.ViewModels.ConfirmationDialogViewModel();
-            confirmOverwriteDialog.Message = message;
-            confirmOverwriteDialog.Value = defaultCheckboxValue;
-            bool? result = SCaddinsApp.WindowManager.ShowDialog(confirmOverwriteDialog, null, ExportManager.ViewModels.ConfirmationDialogViewModel.DefaultWindowSettings);
+            var confirmOverwriteDialog = new ExportManager.ViewModels.ConfirmationDialogViewModel
+            {
+                Message = message,
+                Value = defaultCheckboxValue
+            };
+            bool? result = SCaddinsApp.WindowManager.ShowDialogAsync(confirmOverwriteDialog, null, ExportManager.ViewModels.ConfirmationDialogViewModel.DefaultWindowSettings);
             checkboxResult = confirmOverwriteDialog.ValueAsBool;
             return result.HasValue ? result.Value : false;
         }
@@ -69,6 +72,8 @@ namespace SCaddins.Common
                 if (File.Exists(defaultFile))
                 {
                     dialog.InitialDirectory = Path.GetDirectoryName(defaultFile);
+                } else {
+                    dialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 }
                 dialog.Multiselect = false;
                 System.Windows.Forms.DialogResult result = dialog.ShowDialog();

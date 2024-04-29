@@ -20,6 +20,7 @@ namespace SCaddins.HatchEditor
     using System.Collections.Generic;
     using System.Dynamic;
     using System.IO;
+    using System.Linq;
     using System.Text;
     using Autodesk.Revit.DB;
     using Autodesk.Revit.UI;
@@ -42,6 +43,7 @@ namespace SCaddins.HatchEditor
                     result.Add(h);
                 }
             }
+            result = result.OrderBy(l => l.Name).ToList();
             return result;
         }
 
@@ -108,10 +110,15 @@ namespace SCaddins.HatchEditor
                             defs.Append(System.Environment.NewLine);
                         }
                     } while (i < (array.Length - 1) && !array[i + 1].Trim().StartsWith(@"*", System.StringComparison.InvariantCulture));
-                    var hatch = new Hatch();
-                    hatch.Name = name;
-                    hatch.HatchPattern.Target = type.ToUpper(System.Globalization.CultureInfo.InvariantCulture).Contains("DRAFTING") ? FillPatternTarget.Drafting : FillPatternTarget.Model;
-                    hatch.Definition = defs.ToString();
+                    var hatch = new Hatch
+                    {
+                        Name = name,
+                        HatchPattern =
+                        {
+                            Target = type.ToUpper(System.Globalization.CultureInfo.InvariantCulture).Contains("DRAFTING") ? FillPatternTarget.Drafting : FillPatternTarget.Model
+                        },
+                        Definition = defs.ToString()
+                    };
                     result.Add(hatch);
                 }
             }
@@ -138,7 +145,7 @@ namespace SCaddins.HatchEditor
             settings.SizeToContent = System.Windows.SizeToContent.Manual;
 
             var vm = new ViewModels.HatchEditorViewModel(udoc.Document);
-            SCaddinsApp.WindowManager.ShowDialog(vm, null, settings);
+            SCaddinsApp.WindowManager.ShowDialogAsync(vm, null, settings);
             return Result.Succeeded;
         }
     }

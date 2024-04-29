@@ -2,7 +2,7 @@
 
 # SCaddins #
 
-SCaddins is a collection of Revit add-ins. Currently Revit versions 2016-2022 are supported.  
+SCaddins is a collection of Revit add-ins. Currently Revit versions 2020-2024 are supported.  
 
 Have a look at the [**wiki**](https://github.com/acnicholas/scaddins/wiki/Home) for more information on each utility.
 
@@ -12,22 +12,17 @@ Download the latest version from [**here**](https://github.com/acnicholas/scaddi
 
 ### Build from Source ###
 
-Run the powershell script `build.ps1` to build the project.
+Run the `build.bat` to build the project and installer.
 
-SCaddins will attempt to build for availble Revit versions(2018-2023), by looking for RevitAPI[UI].dll in the following standard locations:
+SCaddins will attempt to build for availble Revit versions(2020-2024), by looking for RevitAPI[UI].dll in the following standard locations:
 
- - C:\Program Files\AutoDesk\Revit 2018
- - C:\Program Files\AutoDesk\Revit 2019
  - C:\Program Files\AutoDesk\Revit 2020
  - C:\Program Files\AutoDesk\Revit 2021
  - C:\Program Files\AutoDesk\Revit 2022
  - C:\Program Files\AutoDesk\Revit 2023
+ - C:\Program Files\AutoDesk\Revit 2024
 
  
-To build the msi installer run:
+To build the installer run:
 
-`build.bat`
-
-or
-
-`build.ps1 -Target "Dist"`
+`build_installer.bat`

@@ -1,4 +1,4 @@
-// (C) Copyright 2013-2021 by Andrew Nicholas
+// (C) Copyright 2013-2023 by Andrew Nicholas
 //
 // This file is part of SCaddins.
 //
@@ -45,11 +45,11 @@ namespace SCaddins.SolarAnalysis
             }
 
             var vm = new ViewModels.SolarViewsViewModel(commandData.Application.ActiveUIDocument);
-            SCaddinsApp.WindowManager.ShowDialog(vm, null, ViewModels.SolarViewsViewModel.DefaultViewSettings);
+            SCaddinsApp.WindowManager.ShowDialogAsync(vm, null, ViewModels.SolarViewsViewModel.DefaultViewSettings);
 
             if (vm.CreateAnalysisView)
             {
-#if REVIT2021 || REVIT2022 || REVIT2023
+#if REVIT2021 || REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
                 var internalUnitsGridSize = UnitUtils.ConvertToInternalUnits(vm.AnalysisGridSize, UnitTypeId.Millimeters);
 #else
                 var internalUnitsGridSize = UnitUtils.ConvertToInternalUnits(vm.AnalysisGridSize, DisplayUnitType.DUT_MILLIMETERS);

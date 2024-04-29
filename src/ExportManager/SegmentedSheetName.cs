@@ -33,9 +33,8 @@ namespace SCaddins.ExportManager
             Hooks = new Collection<string>();
             // ReSharper disable once StringLiteralTypo
             Name = "YYYYMMDD-AD-NNN[R]";
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
             PDFExportOptions = null;
-            DWGExportOptions = null;
 #endif
         }
 
@@ -69,10 +68,8 @@ namespace SCaddins.ExportManager
             }
         }
 
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
         public PDFExportOptions PDFExportOptions { get; set; }
-
-        public PDFExportOptions DWGExportOptions { get; set; }
 #endif
 
         public Collection<string> Hooks { get; }

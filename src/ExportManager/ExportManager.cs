@@ -34,7 +34,6 @@ namespace SCaddins.ExportManager
     using Autodesk.Revit.UI;
     using Microsoft.Win32;
     using Properties;
-    using ArgumentException = Autodesk.Revit.Exceptions.ArgumentException;
     using PrintRange = Autodesk.Revit.DB.PrintRange;
 
     public class Manager
@@ -79,8 +78,6 @@ namespace SCaddins.ExportManager
         {
             get; set;
         }
-
-        public static string ForceRasterPrintParameterName => Settings1.Default.UseRasterPrinterParameter;
 
         public ObservableCollection<ExportSheet> AllSheets { get; }
 
@@ -151,27 +148,12 @@ namespace SCaddins.ExportManager
             }
         }
 
-        public string GhostscriptBinDirectory
-        {
-            get; set;
-        }
-
-        public string GhostscriptLibDirectory
-        {
-            get; set;
-        }
-
         public string PdfPrinterName
         {
             get; set;
         }
 
         public string PDF24PrinterName
-        {
-            get; set;
-        }
-
-        public string PostscriptPrinterName
         {
             get; set;
         }
@@ -256,7 +238,7 @@ namespace SCaddins.ExportManager
             }
         }
 
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
         /// <summary>
         /// Fallback options for pdf export (Revit versions 2022 and greater.
         /// </summary>
@@ -476,7 +458,7 @@ namespace SCaddins.ExportManager
                 foreach (var parameter in parameters)
                 {
                     var p = parameter as Parameter;
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
                     if (!yesNoParameters.Select(s => s.Name).Contains(p.Definition.Name)
                         && !(p.Element is ElementType)
                         && !p.IsReadOnly
@@ -508,7 +490,7 @@ namespace SCaddins.ExportManager
                 foreach (var parameter in parameters)
                 {
                     var p = parameter as Parameter;
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
                     if (!yesNoParameters.Select(s => s.Name).Contains(p.Definition.Name)
                         && !(p.Element is ElementType)
                         && !p.IsReadOnly
@@ -574,12 +556,12 @@ namespace SCaddins.ExportManager
                 ExportRevitPDF(sheet, log);
             }
 
-#if !REVIT2022 && !REVIT2023
+#if !REVIT2022 && !REVIT2023 && !REVIT2024 && !REVIT2025
             if (sheet.SCPrintSetting != null)
             {
                 if (exportFlags.HasFlag(ExportOptions.DWG))
                 {
-                    ExportDWG(sheet, exportFlags.HasFlag(ExportOptions.NoTitle), log);
+                    ExportDWG(sheet, log);
                 }
 
                 if (exportFlags.HasFlag(ExportOptions.PDF))
@@ -599,7 +581,7 @@ namespace SCaddins.ExportManager
 #else
             if (exportFlags.HasFlag(ExportOptions.DWG))
             {
-                ExportDWG(sheet, exportFlags.HasFlag(ExportOptions.NoTitle), log);
+                ExportDWG(sheet, log);
             }
 
             if (exportFlags.HasFlag(ExportOptions.PDF))
@@ -617,7 +599,9 @@ namespace SCaddins.ExportManager
 
         public void SaveViewSet(string name, List<ExportSheet> selectedSheets)
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             var viewSetItem = new ViewSetItem(-1, name, selectedSheets.Select(s => s.Id.IntegerValue).ToList());
+#pragma warning restore CS0618 // Type or member is obsolete
             AllViewSheetSets.Add(viewSetItem);
             using (Transaction t = new Transaction(Doc))
             {
@@ -629,11 +613,9 @@ namespace SCaddins.ExportManager
                         set.Insert(s.Sheet);
                     }
                     var pm = Doc.PrintManager;
-                    ////pm.ViewSheetSetting.
                     pm.PrintRange = PrintRange.Select;
                     pm.ViewSheetSetting.CurrentViewSheetSet = pm.ViewSheetSetting.InSession;
                     pm.ViewSheetSetting.InSession.Views = set;
-                    ////pm.Apply();
                     pm.ViewSheetSetting.SaveAs(name);
                     if (t.Commit() != TransactionStatus.Committed)
                     {
@@ -658,18 +640,19 @@ namespace SCaddins.ExportManager
             PDF24PrinterName = Settings1.Default.PDF24PrinterDriver;
             PrinterNameA3 = Settings1.Default.A3PrinterDriver;
             PrinterNameLargeFormat = Settings1.Default.LargeFormatPrinterDriver;
-            PostscriptPrinterName = Settings1.Default.PSPrinterDriver;
             exportDirectory = Settings1.Default.ExportDir;
             AcadVersion = ACADVersion.Default;
             SaveHistory = Settings1.Default.SaveHistory;
             ShowExportLog = Settings1.Default.ShowExportLog;
-            #if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
                 ForceRevisionToDateString = false;
                 UseDateForEmptyRevisions = false;
-            #else
+                Settings1.Default.ForceDateRevision = false;
+                Settings1.Default.UseDateForEmptyRevisions = false;
+#else
                 ForceRevisionToDateString = Settings1.Default.ForceDateRevision;
                 UseDateForEmptyRevisions = Settings1.Default.UseDateForEmptyRevisions;
-            #endif
+#endif
             VerifyOnStartup = Settings1.Default.VerifyOnStartup;
             ExportAdditionalViewports = Settings1.Default.ExportAdditionalViewports;
             ExportViewportsOnly = Settings1.Default.ExportViewportsOnly;
@@ -679,6 +662,13 @@ namespace SCaddins.ExportManager
         {
             var ps = new PrinterSettings();
             ps.PrinterName = PdfPrinterName;
+            return ps.IsValid;
+        }
+
+        public bool PDF24SanityCheck()
+        {
+            var ps = new PrinterSettings();
+            ps.PrinterName = PDF24PrinterName;
             return ps.IsValid;
         }
 
@@ -729,7 +719,7 @@ namespace SCaddins.ExportManager
             }
             else
             {
-                SCaddinsApp.WindowManager.ShowMessageBox("test", "print error");
+                SCaddinsApp.WindowManager.ShowMessageBox("Print Error", "print error");
             }
             log.EndLoggingIndividualItem(startTime, null);
         }
@@ -767,7 +757,7 @@ namespace SCaddins.ExportManager
             }
         }
 
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
         public bool TryGetExportPdfSettingsByName(string name, out PDFExportOptions options)
         {
             var collector = new FilteredElementCollector(Doc);
@@ -823,16 +813,83 @@ namespace SCaddins.ExportManager
             FileNameTypes.Clear();
 
             //// Load config from project if it exists
+            /// settings for xml file
             var settingsOne = Doc.ProjectInformation.LookupParameter("Primary SCexport Settings Name");
             var formatOne = Doc.ProjectInformation.LookupParameter("Primary SCexport Settings Format");
-            var pdfSettingsOne = Doc.ProjectInformation.LookupParameter("Primary SCexport PDF Settings Name");
-            var dwgSettingsOne = Doc.ProjectInformation.LookupParameter("Primary SCexport DWG Settings Name");
             var settingsTwo = Doc.ProjectInformation.LookupParameter("Secondary SCexport Settings Name");
             var formatTwo = Doc.ProjectInformation.LookupParameter("Secondary SCexport Settings Format");
-            var pdfSettingsTwo = Doc.ProjectInformation.LookupParameter("Secondary SCexport PDF Settings Name");
-            var dwgSettingsTwo = Doc.ProjectInformation.LookupParameter("Secondary SCexport DWG Settings Name");
 
-#if REVIT2022 || REVIT2023 || REVIT2024
+            // If no args are set the script will run anyway without args.
+            // arg will be auto set to the currently exported file. 
+            var exportHookOne = Doc.ProjectInformation.LookupParameter("Primary Post Export Script");
+            var exportHookOneArgs = Doc.ProjectInformation.LookupParameter("Primary Post Export Script Args");
+            var exportHookOneFileExtensions = Doc.ProjectInformation.LookupParameter("Primary Post Export Extensions");
+            var exportHookTwo = Doc.ProjectInformation.LookupParameter("Secondary Post Export Script");
+            var exportHookTwoArgs = Doc.ProjectInformation.LookupParameter("Secondary Post Export Script Args");
+            var exportHookTwoFileExtensions = Doc.ProjectInformation.LookupParameter("Secondary Post Export Extensions");
+
+            // setting using Revit native naming (PDF export dialog)
+            // naming scheme will be auto generated from these
+            // export hooks above will also be used.
+            var pdfSettingsOne = Doc.ProjectInformation.LookupParameter("Primary SCexport PDF Settings Name");
+            var pdfSettingsTwo = Doc.ProjectInformation.LookupParameter("Secondary SCexport PDF Settings Name");
+
+            var hook = new PostExportHookCommand();
+            if (exportHookOne != null)
+            {
+                hook.SetCommand(exportHookOne.AsString());
+                hook.SetName("ProjectConfigHookOne");
+
+                if (exportHookOneFileExtensions != null)
+                {
+                    foreach (string s in exportHookOneFileExtensions.AsString().Split(';'))
+                    {
+                        hook.AddSupportedFilenameExtension(s);
+                    }
+                }
+
+                if (exportHookOneArgs != null)
+                {
+                    var args = exportHookOneArgs.AsString();
+                    hook.SetArguments(args);
+                }
+                else
+                {
+                    var args = @"$exportDir\$fullExportName$fileExtension"; // file extension includes the "."
+                    hook.SetArguments(args);
+                }
+                postExportHooks.Add(hook.Name, hook);
+            }
+
+            var hook2 = new PostExportHookCommand();
+            if (exportHookTwo != null)
+            {
+                hook2.SetCommand(exportHookTwo.AsString());
+                hook2.SetName("ProjectConfigHookTwo");
+
+                if (exportHookTwoFileExtensions != null)
+                {
+                    foreach (string s in exportHookTwoFileExtensions.AsString().Split(';'))
+                    {
+                        hook2.AddSupportedFilenameExtension(s);
+                    }
+                }
+
+                if (exportHookTwoArgs != null)
+                {
+                    var args = exportHookTwoArgs.AsString();
+                    hook2.SetArguments(args);
+                }
+                else
+                {
+                    var args = @"$exportDir\$fullExportName$fileExtension"; // file extension includes the "."
+                    hook2.SetArguments(args);
+                }
+                postExportHooks.Add(hook2.Name, hook2);
+            }
+
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
+            // Don't attempt to do this if not available (Revit < 2022)
             if (pdfSettingsOne != null)
             {
                 PDFExportOptions opts;
@@ -841,18 +898,26 @@ namespace SCaddins.ExportManager
                     var s = new SegmentedSheetName();
                     s.PDFExportOptions = opts;
                     s.Name = pdfSettingsOne.AsString();
+                    if (exportHookOne != null)
+                    {
+                        s.Hooks.Add(hook.Name);
+                    }
                     FileNameTypes.Add(s);
                 }
             }
 
-            if (dwgSettingsOne != null)
+            if (pdfSettingsTwo != null)
             {
                 PDFExportOptions opts;
-                if (TryGetExportPdfSettingsByName(dwgSettingsOne.AsString(), out opts))
+                if (TryGetExportPdfSettingsByName(pdfSettingsTwo.AsString(), out opts))
                 {
                     var s = new SegmentedSheetName();
-                    s.DWGExportOptions = opts;
-                    s.Name = dwgSettingsOne.AsString();
+                    s.PDFExportOptions = opts;
+                    s.Name = pdfSettingsTwo.AsString();
+                    if (exportHookTwo != null)
+                    {
+                        s.Hooks.Add(hook2.Name);
+                    }
                     FileNameTypes.Add(s);
                 }
             }
@@ -864,30 +929,36 @@ namespace SCaddins.ExportManager
                 var name = new SegmentedSheetName();
                 name.Name = settingsOne.AsString();
                 name.NameFormat = formatOne.AsString();
+                if (exportHookOne != null)
+                {
+                    name.Hooks.Add(hook.Name);
+                } 
                 FileNameTypes.Add(name);
-            }
+            } 
 
             if (settingsTwo != null && formatTwo != null)
             {
                 var name = new SegmentedSheetName();
                 name.Name = settingsTwo.AsString();
                 name.NameFormat = formatTwo.AsString();
+                if (exportHookTwo != null)
+                {
+                    name.Hooks.Add(hook2.Name);
+                }
                 FileNameTypes.Add(name);
             }
 
-            //// Load config settings from file if available
+            // Load config settings from file if available
             var config = GetConfigFileName(Doc);
             var b = ImportXMLinfo(config);
-
-            /// Set a default config if none are found
+            
             if (!b || FileNameTypes.Count <= 0)
             {
                 var name = new SegmentedSheetName();
                 name.Name = "YYYYMMDD-AD-NNN";
                 name.NameFormat = "$projectNumber-$sheetNumber[$sheetRevision] - $sheetDescription";
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
                 name.PDFExportOptions = CreateDefaultPDFExportOptions(name.NameFormat, Doc);
-                name.DWGExportOptions = name.PDFExportOptions;
 #endif
                 FileNameTypes.Add(name);
                 FileNameScheme = name;
@@ -983,16 +1054,23 @@ namespace SCaddins.ExportManager
                 foreach (var element in collector)
                 {
                     var v = (ViewSheetSet)element;
+#if REVIT2024 || REVIT2025
+                    var viewIds = v.Views.Cast<View>()
+                        .Where(vs => vs.ViewType == ViewType.DrawingSheet)
+                        .Select(vs => (int)vs.Id.Value).ToList();
+                    result.Add(new ViewSetItem((int)v.Id.Value, v.Name, viewIds));
+#else
                     var viewIds = v.Views.Cast<View>()
                         .Where(vs => vs.ViewType == ViewType.DrawingSheet)
                         .Select(vs => vs.Id.IntegerValue).ToList();
                     result.Add(new ViewSetItem(v.Id.IntegerValue, v.Name, viewIds));
+#endif
                 }
             }
             return result;
         }
 
-        private static void RemoveTitleBlock(
+        /*private static void RemoveTitleBlock(
             ExportSheet vs,
             ICollection<ElementId> title,
             bool hide,
@@ -1021,7 +1099,7 @@ namespace SCaddins.ExportManager
                 SCaddinsApp.WindowManager.ShowMessageBox("Revit", "cannot Hide Title: " + e.Message);
                 t.RollBack();
             }
-        }
+        }*/
 
         ////[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "PrinterJobControl")]
         [SecurityCritical]
@@ -1084,7 +1162,7 @@ namespace SCaddins.ExportManager
 
         private void ExportRevitPDF(ExportSheet vs, ExportLog log)
         {
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024
 
             if (log != null)
             {
@@ -1105,11 +1183,22 @@ namespace SCaddins.ExportManager
             views = new List<ElementId>();
             views.Add(vs.Id);
 
-            ////log.AddMessage(Resources.MessageAssigningExportOptions + vs.);
+            PDFExportOptions opts = vs.SegmentedFileName.PDFExportOptions;
+            if (vs.ForceRasterPrint)
+            {
+                opts.AlwaysUseRaster = true;
+            }
+
             var name = vs.FullExportName + Resources.FileExtensionPDF;
             log.AddMessage(Resources.MessageExportingToDirectory + vs.ExportDirectory);
             log.AddMessage(Resources.MessageExportingToFileName + name);
-            Doc.Export(vs.ExportDirectory, views, vs.SegmentedFileName.PDFExportOptions);
+            Doc.Export(vs.ExportDirectory, views, opts);
+
+            if (vs.SegmentedFileName.Hooks.Count > 0)
+            {
+                FileUtilities.WaitForFileAccess(vs.FullExportPath(Resources.FileExtensionPDF));
+                RunExportHooks(Resources.FileExtensionPDF, vs, log);
+            }
 #endif
         }
 
@@ -1117,7 +1206,7 @@ namespace SCaddins.ExportManager
         [PermissionSetAttribute(SecurityAction.Demand, Name = "FullTrust")]
         private void ExportAdobePDF(ExportSheet vs, ExportLog log)
         {
-#if !REVIT2022 && !REVIT2023
+#if !REVIT2022 && !REVIT2023 && !REVIT2024
                 ExportPDF(vs, log);
 #else
                 log.AddError(vs.FullExportName, "PDF export with Adobe Acrobat is not supported in Revit versions > 2021.");
@@ -1209,11 +1298,14 @@ namespace SCaddins.ExportManager
                 } else {
                     log.AddError(vs.FullExportName, Resources.ErrorFailedToPrint);
                 }
-                FileUtilities.WaitForFileAccess(vs.FullExportPath(Resources.FileExtensionPDF));
 
-                RunExportHooks(Resources.FileExtensionPDF, vs);
+                if (vs.SegmentedFileName.Hooks.Count > 0)
+                {
+                    FileUtilities.WaitForFileAccess(vs.FullExportPath(Resources.FileExtensionPDF));
+                    RunExportHooks(Resources.FileExtensionPDF, vs, log);
+                }
 
-                SCaddins.Common.SystemUtilities.KillAllProcesses("acrotray");
+                Common.SystemUtilities.KillAllProcesses("acrotray");
             } else
             {
                 ////log.AddError(vs.FullExportName, Resources.ErrorCantOverwriteFile);
@@ -1221,7 +1313,7 @@ namespace SCaddins.ExportManager
         }
 
         // FIXME this is nasty
-        private void ExportDWG(ExportSheet vs, bool removeTitle, ExportLog log)
+        private void ExportDWG(ExportSheet vs, ExportLog log)
         {
             if (log != null)
             {
@@ -1244,17 +1336,16 @@ namespace SCaddins.ExportManager
                 return;
             }
 
-            List<ElementId> titleBlockHidden;
-            titleBlockHidden = new List<ElementId>();
-            var titleBlock = TitleBlockInstanceFromSheetNumber(vs.SheetNumber, Doc);
-            titleBlockHidden.Add(titleBlock.Id);
+            // List<ElementId> titleBlockHidden;
+            // titleBlockHidden = new List<ElementId>();
+            // var titleBlock = TitleBlockInstanceFromSheetNumber(vs.SheetNumber, Doc);
+            // titleBlockHidden.Add(titleBlock.Id);
 
-            if (removeTitle)
-            {
-                log.AddMessage(Resources.MessageAttemptingToHideTitleBlock);
-                RemoveTitleBlock(vs, titleBlockHidden, true, Doc);
-            }
-
+            // if (removeTitle)
+            // {
+            //     log.AddMessage(Resources.MessageAttemptingToHideTitleBlock);
+            //     RemoveTitleBlock(vs, titleBlockHidden, true, Doc);
+            // }
             List<ElementId> views;
             views = new List<ElementId>();
 
@@ -1294,14 +1385,19 @@ namespace SCaddins.ExportManager
                 }
             }
 
-            FileUtilities.WaitForFileAccess(vs.FullExportPath(Resources.FileExtensionDWG));
-            RunExportHooks("dwg", vs);
-
-            if (removeTitle)
+            if (vs.SegmentedFileName.Hooks.Count > 0)
             {
-                log.AddMessage(Resources.MessageShowingTitleBlock);
-                RemoveTitleBlock(vs, titleBlockHidden, false, Doc);
+                FileUtilities.WaitForFileAccess(vs.FullExportPath(Resources.FileExtensionDWG));
+
+                // SCaddinsApp.WindowManager.ShowMessageBox("Running Export Hook");
+                RunExportHooks(Resources.FileExtensionDWG, vs, log);
             }
+
+            // if (removeTitle)
+            // {
+            //     log.AddMessage(Resources.MessageShowingTitleBlock);
+            //     RemoveTitleBlock(vs, titleBlockHidden, false, Doc);
+            // }
         }
 
         private DWGExportOptions GetDefaultDWGExportOptions()
@@ -1325,13 +1421,11 @@ namespace SCaddins.ExportManager
             {
                 return false;
             }
-            ////return true;
+
             if (!ValidateXML(filename))
             {
                 return false;
             }
-
-            postExportHooks.Clear();
 
 #pragma warning disable CA3075 // Insecure DTD processing in XML
             using (var reader = new XmlTextReader(filename))
@@ -1392,21 +1486,12 @@ namespace SCaddins.ExportManager
                                     case "Hook":
                                         name.Hooks.Add(reader.ReadString());
                                         break;
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024
                                     case "PDFNamingRule":
                                         PDFExportOptions opts;
                                         if (TryGetExportPdfSettingsByName(reader.ReadString(), out opts))
                                         {
                                             name.PDFExportOptions = opts;
-                                        }
-
-                                        break;
-
-                                    case "DWGNamingRule":
-                                        PDFExportOptions opts2;
-                                        if (TryGetExportPdfSettingsByName(reader.ReadString(), out opts2))
-                                        {
-                                            name.DWGExportOptions = opts2;
                                         }
                                         break;
 #endif
@@ -1414,14 +1499,10 @@ namespace SCaddins.ExportManager
                             }
                         } while (!(reader.NodeType == XmlNodeType.EndElement && reader.Name == "FilenameScheme"));
                         FileNameTypes.Add(name);
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024
                         if (name.PDFExportOptions == null && name.NameFormat != null)
                         {
                             name.PDFExportOptions = CreateDefaultPDFExportOptions(name.NameFormat, Doc);
-                        }
-                        if (name.DWGExportOptions == null)
-                        {
-                            name.DWGExportOptions = name.PDFExportOptions;
                         }
 #endif
                     }
@@ -1439,33 +1520,41 @@ namespace SCaddins.ExportManager
             return true;
         }
 
-        private void RunExportHooks(string extension, ExportSheet vs)
+        private void RunExportHooks(string extension, ExportSheet vs, ExportLog log)
         {
+            // SCaddinsApp.WindowManager.ShowMessageBox(postExportHooks.Count.ToString());
+            // SCaddinsApp.WindowManager.ShowMessageBox(postExportHooks.ElementAt(0).Value.GetCommand());
             for (int i = 0; i < postExportHooks.Count; i++)
             {
                 if (postExportHooks.ElementAt(i).Value.HasExtension(extension))
                 {
-                    if (FileNameScheme.Hooks.Count < 1)
+                    if (vs.SegmentedFileName.Hooks.Count < 1)
                     {
+                        // SCaddinsApp.WindowManager.ShowMessageBox("Hook Extension Not Found");
                         return;
                     }
 
-                    if (FileNameScheme.Hooks.Contains(postExportHooks.ElementAt(i).Key))
+                    if (vs.SegmentedFileName.Hooks.Contains(postExportHooks.ElementAt(i).Key))
                     {
-                        postExportHooks.ElementAt(i).Value.Run(vs, extension);
-                    }
+                        // SCaddinsApp.WindowManager.ShowMessageBox("Running Hook");
+                        postExportHooks.ElementAt(i).Value.Run(vs, extension, log);
+                    } 
                 }
             }
         }
 
         private void SetDefaultFlags()
         {
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
             AddExportOption(ExportOptions.DirectPDF);
 #else
              if (PDFSanityCheck()) {
                     AddExportOption(ExportOptions.PDF);
              }
+             else if (PDF24SanityCheck())
+             {
+                AddExportOption(ExportOptions.PDF24);
+            }
 #endif
             if (Settings1.Default.HideTitleBlocks)
             {

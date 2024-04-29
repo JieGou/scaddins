@@ -81,6 +81,9 @@ namespace SCaddins
             webRequest.ContentType = "application/json";
             webRequest.UserAgent = "Nothing";
             var latestAsJson = "nothing to see here";
+            if (latestAsJson == null) {
+                throw new ArgumentNullException(nameof(latestAsJson));
+            }
 
             using (var s = webRequest.GetResponse().GetResponseStream())
             using (var sr = new StreamReader(s))
@@ -112,7 +115,7 @@ namespace SCaddins
             settings.ResizeMode = System.Windows.ResizeMode.NoResize;
             settings.SizeToContent = System.Windows.SizeToContent.WidthAndHeight;
             var upgradeViewModel = new Common.ViewModels.UpgradeViewModel(installedVersion, latestAvailableVersion, info, downloadLink);
-            WindowManager.ShowDialog(upgradeViewModel, null, settings);
+            WindowManager.ShowDialogAsync(upgradeViewModel, null, settings);
         }
 
         public static PushButtonData LoadInfo(string dll)

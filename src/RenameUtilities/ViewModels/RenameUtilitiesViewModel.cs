@@ -1,4 +1,4 @@
-﻿// (C) Copyright 2018 by Andrew Nicholas
+﻿// (C) Copyright 2018-2024 by Andrew Nicholas
 //
 // This file is part of SCaddins.
 //
@@ -19,10 +19,11 @@ namespace SCaddins.RenameUtilities.ViewModels
 {
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Diagnostics.CodeAnalysis;
     using System.Dynamic;
     using System.Linq;
     using Caliburn.Micro;
-
+    
     internal class RenameUtilitiesViewModel : Screen
     {
         private RenameManager manager;
@@ -67,7 +68,8 @@ namespace SCaddins.RenameUtilities.ViewModels
         {
             get { return RenameManager.AvailableParameterTypes; }
         }
-
+        
+        [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global", Justification = "Uses refactoring (Caliburn.Micro")]
         public bool ParameterCategoryEnabled { get; set; }
 
         public string Pattern
@@ -121,7 +123,8 @@ namespace SCaddins.RenameUtilities.ViewModels
         {
             get
             {
-                return RenameManager.GetParametersByCategoryName(selectedParameterCategory, manager.Document);
+                var l = RenameManager.GetParametersByCategoryName(selectedParameterCategory, manager.Document);
+                return new BindableCollection<RenameParameter>(l.OrderBy(p => p.Name));
             }
         }
 
@@ -170,6 +173,7 @@ namespace SCaddins.RenameUtilities.ViewModels
                 selectedParameterCategory = value;
                 NotifyOfPropertyChange(() => SelectedParameterCategory);
                 NotifyOfPropertyChange(() => RenameParameters);
+                RenameCandidates.Clear();
             }
         }
 
@@ -208,7 +212,7 @@ namespace SCaddins.RenameUtilities.ViewModels
             set
             {
                 selectedRenameParameter = value;
-                manager.SetCandidatesByParameter(selectedRenameParameter.Parameter, selectedRenameParameter.Category, selectedRenameParameter.Type, selectedRenameParameter.Family, SelectedRenameParameter.Group);
+                manager.SetCandidatesByParameter(selectedRenameParameter);
                 NotifyOfPropertyChange(() => SelectedRenameParameter);
                 NotifyOfPropertyChange(() => RenameCandidates);
                 NotifyOfPropertyChange(() => RenameAllMatchesLabel);
@@ -216,14 +220,9 @@ namespace SCaddins.RenameUtilities.ViewModels
             }
         }
 
-        public System.Windows.Visibility ShowRenameParameters
-        {
-            get
-            {
-                return manager.SelectedRenameMode.HasInputParameters == true
-                    ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
-            }
-        }
+        public System.Windows.Visibility ShowRenameParameters =>
+            manager.SelectedRenameMode.HasInputParameters 
+                ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
 
         public static void NavigateTo(System.Uri url)
         {
@@ -235,7 +234,11 @@ namespace SCaddins.RenameUtilities.ViewModels
             manager.CommitRename();
             if (selectedRenameParameter != null)
             {
-                manager.SetCandidatesByParameter(selectedRenameParameter.Parameter, selectedRenameParameter.Category, selectedRenameParameter.Type, SelectedRenameParameter.Family, SelectedRenameParameter.Group);
+                manager.SetCandidatesByParameter(selectedRenameParameter);
+            }
+            else
+            {
+                SCaddinsApp.WindowManager.ShowMessageBox("No elements to rename");
             }
             NotifyOfPropertyChange(() => RenameCandidates);
         }
@@ -253,7 +256,7 @@ namespace SCaddins.RenameUtilities.ViewModels
             manager.CommitRenameSelection(selectedCandiates);
             if (selectedRenameParameter != null)
             {
-                manager.SetCandidatesByParameter(selectedRenameParameter.Parameter, selectedRenameParameter.Category, selectedRenameParameter.Type, selectedRenameParameter.Family, SelectedRenameParameter.Group);
+                manager.SetCandidatesByParameter(selectedRenameParameter);
             }
             NotifyOfPropertyChange(() => RenameCandidates);
         }

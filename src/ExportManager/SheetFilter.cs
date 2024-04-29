@@ -58,6 +58,9 @@
                 case "Scale":
                     properyName = "Scale";
                     break;
+                case "Show In Schedule":
+                    properyName = "AppearsInSheetList";
+                    break;
                 case "North Point":
                     properyName = "NorthPointVisibilityString";
                     break;
@@ -69,7 +72,6 @@
 
         public override string ToString()
         {
-            ////SCaddinsApp.WindowManager.ShowMessageBox(FilterPropertyName);
             return @"Filter by " + FilterPropertyName + @" [" + FilterValue + @"]";
         }
 

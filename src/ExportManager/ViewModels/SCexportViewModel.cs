@@ -1,4 +1,4 @@
-﻿// (C) Copyright 2018-2021 by Andrew Nicholas
+﻿// (C) Copyright 2018-2023 by Andrew Nicholas
 //
 // This file is part of SCaddins.
 //
@@ -96,7 +96,7 @@ namespace SCaddins.ExportManager.ViewModels
                 settings.Width = 768;
                 settings.Title = "SCexport - By Andrew Nicholas";
                 settings.ShowInTaskbar = false;
-                settings.SizeToContent = System.Windows.SizeToContent.Manual;
+                settings.SizeToContent = SizeToContent.Manual;
                 return settings;
             }
         }
@@ -290,6 +290,20 @@ namespace SCaddins.ExportManager.ViewModels
             }
         }
 
+        public string InvlaidScaleBarStatusText
+        {
+            get
+            {
+                var invalidScaleBars = exportManager.AllSheets.Count(s => s.ScaleBarError);
+                if (invalidScaleBars > 0)
+                {
+                    return @" [Incorrect scalebars: " + invalidScaleBars + @"]";
+                }
+
+                return string.Empty;
+            }
+        }
+
         public bool IsSearchTextFocused
         {
             get; set;
@@ -339,42 +353,15 @@ namespace SCaddins.ExportManager.ViewModels
             get { return recentExportSets.Count > 2; }
         }
 
-        public string PreviousExportThreeName
-        {
-            get
-            {
-                return PreviousExportThreeIsEnabled ? recentExportSets[2].DescriptiveName : "N/A";
-            }
-        }
+        public string PreviousExportThreeName => PreviousExportThreeIsEnabled ? recentExportSets[2].DescriptiveName : "N/A";
 
-        public bool PreviousExportTwoIsEnabled
-        {
-            get { return recentExportSets.Count > 1; }
-        }
+        public bool PreviousExportTwoIsEnabled => recentExportSets.Count > 1;
 
-        public string PreviousExportTwoName
-        {
-            get
-            {
-                return PreviousExportTwoIsEnabled ? recentExportSets[1].DescriptiveName : "N/A";
-            }
-        }
+        public string PreviousExportTwoName => PreviousExportTwoIsEnabled ? recentExportSets[1].DescriptiveName : "N/A";
 
-        public string PrintButtonToolTip
-        {
-            get
-            {
-                return CanPrint ? "Print selected drawings. For further settings goto options." : "Select sheets to enable printing.";
-            }
-        }
+        public string PrintButtonToolTip => CanPrint ? "Print selected drawings. For further settings goto options." : "Select sheets to enable printing.";
 
-        public BindableCollection<string> PrintTypes
-        {
-            get
-            {
-                return new BindableCollection<string>(printTypes);
-            }
-        }
+        public BindableCollection<string> PrintTypes => new BindableCollection<string>(printTypes);
 
         public string SearchText
         {
@@ -479,6 +466,10 @@ namespace SCaddins.ExportManager.ViewModels
                 {
                     list.Add("rPDF");
                 }
+                if (ExportPDF24)
+                {
+                    list.Add("PDF24");
+                }
                 if (ExportDWG)
                 {
                     list.Add("DWG");
@@ -488,7 +479,7 @@ namespace SCaddins.ExportManager.ViewModels
             }
         }
 
-        public static void NavigateTo(System.Uri url)
+        public static void NavigateTo(Uri url)
         {
             Process.Start(new ProcessStartInfo(url.AbsoluteUri));
         }
@@ -496,7 +487,7 @@ namespace SCaddins.ExportManager.ViewModels
         public void AddRevision()
         {
             var revisionSelectionViewModel = new RevisionSelectionViewModel(exportManager.Doc);
-            bool? result = SCaddinsApp.WindowManager.ShowDialog(revisionSelectionViewModel, null, RevisionSelectionViewModel.DefaultWindowSettings);
+            bool? result = SCaddinsApp.WindowManager.ShowDialogAsync(revisionSelectionViewModel, null, RevisionSelectionViewModel.DefaultWindowSettings);
             bool newBool = result ?? false;
             if (newBool)
             {
@@ -510,15 +501,15 @@ namespace SCaddins.ExportManager.ViewModels
 
         public void AlignViews()
         {
-            var message = "Warning, there are still some bugs in this." + System.Environment.NewLine +
-                "Currently this will only work with views containing one sheet." + System.Environment.NewLine +
-                System.Environment.NewLine +
+            var message = "Warning, there are still some bugs in this." + Environment.NewLine +
+                "Currently this will only work with views containing one sheet." + Environment.NewLine +
+                Environment.NewLine +
                 "Just in case, please save your model before use";
 
             SCaddinsApp.WindowManager.ShowWarningMessageBox("Align", message);
 
             var viewModel = new TemplateViewViewModel(this.SelectedSheets);
-            bool? result = SCaddinsApp.WindowManager.ShowDialog(viewModel, null, TemplateViewViewModel.DefaultWindowSettings);
+            bool? result = SCaddinsApp.WindowManager.ShowDialogAsync(viewModel, null, TemplateViewViewModel.DefaultWindowSettings);
             bool newBool = result ?? false;
             if (newBool)
             {
@@ -526,17 +517,17 @@ namespace SCaddins.ExportManager.ViewModels
             }
         }
 
-        public void ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+        public void ContextMenuOpening(object sender, ContextMenuEventArgs e)
         {
             if (e == null || sender == null)
             {
                 return;
             }
-            if (e.OriginalSource.GetType() != typeof(System.Windows.Controls.TextBlock))
+            if (e.OriginalSource.GetType() != typeof(TextBlock))
             {
                 return;
             }
-            var menuItem = (System.Windows.Controls.TextBlock)e.OriginalSource;
+            var menuItem = (TextBlock)e.OriginalSource;
 
             try
             {
@@ -550,7 +541,7 @@ namespace SCaddins.ExportManager.ViewModels
                     SelectedSheets.Add(myItem);
                 }
                 SelectedSheet = myItem;
-                var element = (System.Windows.Controls.TextBlock)e.OriginalSource;
+                var element = (TextBlock)e.OriginalSource;
                 var cell = element.Text;
                 SheetFilter = new SheetFilter(currentColumnHeader, cell);
             }
@@ -565,7 +556,7 @@ namespace SCaddins.ExportManager.ViewModels
             var sheetCopierModel = new SCaddins.SheetCopier.ViewModels.SheetCopierViewModel(exportManager.UIDoc);
             sheetCopierModel.AddSheets(selectedSheets);
             IsNotifying = false;
-            SCaddinsApp.WindowManager.ShowDialog(
+            SCaddinsApp.WindowManager.ShowDialogAsync(
                 sheetCopierModel,
                 null,
                 SheetCopier.ViewModels.SheetCopierViewModel.DefaultWindowSettings);
@@ -593,7 +584,7 @@ namespace SCaddins.ExportManager.ViewModels
         {
             isClosing = true;
             closeMode = CloseMode.Export;
-            TryClose(true);
+            TryCloseAsync(true);
         }
 
         public void FixScaleBars()
@@ -614,7 +605,7 @@ namespace SCaddins.ExportManager.ViewModels
         public void KeyPressed(KeyEventArgs keyArgs)
         {
             //// only execute search if in the search text box
-            if (keyArgs.OriginalSource.GetType() == typeof(System.Windows.Controls.TextBox))
+            if (keyArgs.OriginalSource.GetType() == typeof(TextBox))
             {
                 if (keyArgs.Key == Key.Enter)
                 {
@@ -637,7 +628,7 @@ namespace SCaddins.ExportManager.ViewModels
                     break;
 
                 case Key.N:
-#if REVIT2022 || REVIT2023
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
                     exportManager.ToggleExportOption(ExportOptions.DirectPDF);
                     NotifyOfPropertyChange(() => StatusText);
                     NotifyOfPropertyChange(() => ExportButtonLabel);
@@ -682,7 +673,7 @@ namespace SCaddins.ExportManager.ViewModels
                     break;
 
                 case Key.Escape:
-                    TryClose();
+                    TryCloseAsync();
                     break;
 
                 default:
@@ -731,7 +722,6 @@ namespace SCaddins.ExportManager.ViewModels
                 if (currentColumnHeader == @"Custom Parameter 01")
                 {
                     currentColumnHeader = CustomParameter01Name; // FIXME. there's a better way to do this.
-                    // SCaddinsApp.WindowManager.ShowMessageBox(CustomParameter01Name);
                 }
             }
             catch
@@ -748,16 +738,18 @@ namespace SCaddins.ExportManager.ViewModels
         public void OpenViewSet()
         {
             var viewSetSelectionViewModel = new ViewSetSelectionViewModel(exportManager.AllViewSheetSets);
-            bool? result = SCaddinsApp.WindowManager.ShowDialog(viewSetSelectionViewModel, null, ViewSetSelectionViewModel.DefaultWindowSettings);
+            bool? result = SCaddinsApp.WindowManager.ShowDialogAsync(viewSetSelectionViewModel, null, ViewSetSelectionViewModel.DefaultWindowSettings);
             bool newBool = result ?? false;
             if (newBool && viewSetSelectionViewModel.SelectedSet != null)
             {
                 IsNotifying = false;
                 try
                 {
+#pragma warning disable CS0618 // Type or member is obsolete
                     var filter = new Predicate<object>(item => viewSetSelectionViewModel
                             .SelectedSet
                             .ViewIds.Contains(((ExportSheet)item).Sheet.Id.IntegerValue));
+#pragma warning restore CS0618 // Type or member is obsolete
                     Sheets.Filter = filter;
                 }
                 catch (Exception exception)
@@ -772,7 +764,7 @@ namespace SCaddins.ExportManager.ViewModels
         {
             this.IsNotifying = false;
             var optionsModel = new OptionsViewModel(exportManager, this);
-            SCaddinsApp.WindowManager.ShowWindow(optionsModel, null, ViewModels.OptionsViewModel.DefaultWindowSettings);
+            SCaddinsApp.WindowManager.ShowWindowAsync(optionsModel, null, OptionsViewModel.DefaultWindowSettings);
             NotifyOfPropertyChange(() => ExportButtonLabel);
             NotifyOfPropertyChange(() => StatusText);
             this.IsNotifying = true;
@@ -800,7 +792,7 @@ namespace SCaddins.ExportManager.ViewModels
                     break;
             }
 
-            TryClose(true);
+            TryCloseAsync(true);
         }
 
         public void RemoveUnderlays()
@@ -830,7 +822,7 @@ namespace SCaddins.ExportManager.ViewModels
             };
             var settings = RenameUtilities.ViewModels.RenameUtilitiesViewModel.DefaultWindowSettings;
             settings.Title = "Rename <" + selectedSheets.Count.ToString() + @" Sheets from Selection>";
-            SCaddinsApp.WindowManager.ShowDialog(renameSheetModel, null, settings);
+            SCaddinsApp.WindowManager.ShowDialogAsync(renameSheetModel, null, settings);
             foreach (ExportSheet exportSheet in selectedSheets)
             {
                 exportSheet.UpdateName();
@@ -843,10 +835,11 @@ namespace SCaddins.ExportManager.ViewModels
         public void SaveViewSet()
         {
             var saveAsVm = new ViewSetSaveAsViewModel("Select name for new view sheet set", exportManager.AllViewSheetSets);
-            bool? result = SCaddinsApp.WindowManager.ShowDialog(saveAsVm, null, ViewSetSaveAsViewModel.DefaultWindowSettings);
+            bool? result = SCaddinsApp.WindowManager.ShowDialogAsync(saveAsVm, null, ViewSetSaveAsViewModel.DefaultWindowSettings);
             bool newBool = result ?? false;
             if (newBool)
             {
+                // SCaddinsApp.WindowManager.ShowMessageBox("Saving View Set");
                 exportManager.SaveViewSet(saveAsVm.SaveName, selectedSheets);
             }
         }
@@ -869,12 +862,12 @@ namespace SCaddins.ExportManager.ViewModels
             NotifyOfPropertyChange(() => ShowSearchHint);
         }
 
-        public void SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs obj)
+        public void SelectionChanged(object sender, SelectionChangedEventArgs obj)
         {
             if (!isClosing)
             {
                 IsNotifying = false;
-                List<ExportSheet> list = ((System.Windows.Controls.DataGrid)sender).SelectedItems.Cast<ExportSheet>().ToList();
+                List<ExportSheet> list = ((DataGrid)sender).SelectedItems.Cast<ExportSheet>().ToList();
                 IsNotifying = true;
                 SelectedSheets = list;
             }
@@ -895,7 +888,10 @@ namespace SCaddins.ExportManager.ViewModels
             IsNotifying = false;
             try
             {
+#pragma warning disable CS0618 // Type or member is obsolete
                 var filter = new Predicate<object>(item => viewSet.ViewIds.Contains(((ExportSheet)item).Sheet.Id.IntegerValue));
+#pragma warning restore CS0618 // Type or member is obsolete
+
                 Sheets.Filter = filter;
             }
             catch (Exception exception)
@@ -941,18 +937,16 @@ namespace SCaddins.ExportManager.ViewModels
 
             var toggleSelectedSheetParametersViewModel = new ToggleSelectedSheetParametersViewModel(
                 exportManager.Doc, yesNoParameters);
-            bool? result = SCaddinsApp.WindowManager.ShowDialog(
+            bool? result = SCaddinsApp.WindowManager.ShowDialogAsync(
                 toggleSelectedSheetParametersViewModel,
                 null,
                 ToggleSelectedSheetParametersViewModel.DefaultWindowSettings);
-            if (result.HasValue && result.Value == true)
+            if (result.HasValue && result.Value)
             {
-                //// SCaddinsApp.WindowManager.ShowMessageBox("OK");
                 foreach (var item in toggleSelectedSheetParametersViewModel.YesNoParameters)
                 {
                     if (item.Value.HasValue)
                     {
-                        //// SCaddinsApp.WindowManager.ShowMessageBox(item.Name);
                         Manager.ToggleBooleanParameter(selectedSheets, exportManager.Doc, item.Value.Value, item.Name, true);
                     }
                 }
@@ -965,18 +959,16 @@ namespace SCaddins.ExportManager.ViewModels
 
             var toggleSelectedSheetParametersViewModel = new ToggleSelectedSheetParametersViewModel(
                 exportManager.Doc, yesNoParameters);
-            bool? result = SCaddinsApp.WindowManager.ShowDialog(
+            bool? result = SCaddinsApp.WindowManager.ShowDialogAsync(
                 toggleSelectedSheetParametersViewModel,
                 null,
                 ToggleSelectedSheetParametersViewModel.DefaultWindowSettings);
-            if (result.HasValue && result.Value == true)
+            if (result.HasValue && result.Value)
             {
-                //// SCaddinsApp.WindowManager.ShowMessageBox("OK");
                 foreach (var item in toggleSelectedSheetParametersViewModel.YesNoParameters)
                 {
                     if (item.Value.HasValue)
                     {
-                        //// SCaddinsApp.WindowManager.ShowMessageBox(item.Name);
                         Manager.ToggleBooleanParameter(selectedSheets, exportManager.Doc, item.Value.Value, item.Name, false);
                     }
                 }
@@ -1024,6 +1016,9 @@ namespace SCaddins.ExportManager.ViewModels
                     item =>
                         ((item != null) &&
                          (-1 < ((ExportSheet)item).SheetDescription.IndexOf(SearchText, StringComparison.OrdinalIgnoreCase)))
+                        ||
+                         ((item != null) &&
+                         (-1 < ((ExportSheet)item).FullExportName.IndexOf(SearchText, StringComparison.OrdinalIgnoreCase)))
                         ||
                         (item != null &&
                          -1 < ((ExportSheet)item).SheetNumber.IndexOf(SearchText, StringComparison.OrdinalIgnoreCase)));

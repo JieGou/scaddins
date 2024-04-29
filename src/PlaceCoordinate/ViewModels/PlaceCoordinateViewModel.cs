@@ -34,6 +34,9 @@ namespace SCaddins.PlaceCoordinate.ViewModels
         {
             this.doc = doc;
             useSharedCoordinates = true;
+            XCoordinate = 0;
+            YCoordinate = 0;
+            ZCoordinate = 0;
             familiesInModel = Command.GetAllFamilySymbols(doc);
             selectedFamilySymbol = Command.TryGetDefaultSpotCoordFamily(familiesInModel);
             if (selectedFamilySymbol == null)
@@ -165,13 +168,13 @@ namespace SCaddins.PlaceCoordinate.ViewModels
 
         public void Cancel()
         {
-            TryClose(false);
+            TryCloseAsync(false);
         }
 
         public void PlaceFamilyAtCoordinate()
         {
             Command.PlaceFamilyAtCoordinate(doc, SelectedFamilySymbol, new XYZ(XCoordinate, YCoordinate, ZCoordinate), UseSharedCoordinates);
-            TryClose(true);
+            TryCloseAsync(true);
         }
     }
 }

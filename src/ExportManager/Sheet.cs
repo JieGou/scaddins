@@ -1,4 +1,4 @@
-// (C) Copyright 2012-2020 by Andrew Nicholas
+// (C) Copyright 2012-2023 by Andrew Nicholas
 //
 // This file is part of SCaddins.
 //
@@ -129,7 +129,13 @@ namespace SCaddins.ExportManager
         {
             get
             {
-                return forceRasterPrint;
+                return forceRasterPrint;         
+            }
+
+            set
+            {
+                forceRasterPrint = value;
+                NotifyPropertyChanged(nameof(ForceRasterPrint));
             }
         }
 
@@ -199,7 +205,7 @@ namespace SCaddins.ExportManager
         {
             get
             {
-#if REVIT2022
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
                 return SegmentedFileName.Name;
 #else
                 return printSetting != null ? printSetting.Name : string.Empty;
@@ -301,10 +307,10 @@ namespace SCaddins.ExportManager
 
         public string SheetRevision
         {
-#if REVIT2022
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
             get
             {
-                return sheetRevision != string.Empty ? sheetRevision : "Current Revision";
+                return sheetRevision != string.Empty ? sheetRevision : "-";
             }
 #else
             get
@@ -382,6 +388,11 @@ namespace SCaddins.ExportManager
         public bool ValidScaleBar
         {
             get { return RevitScaleWithoutFormatting() == scaleBarScale.Trim(); }
+        }
+
+        public bool ScaleBarError
+        {
+            get { return Scale.Contains(@"*"); }
         }
 
         public bool Verified
@@ -503,6 +514,7 @@ namespace SCaddins.ExportManager
             p.SetValueString(RevitScaleWithoutFormatting());
             scaleBarScale = RevitScaleWithoutFormatting();
             NotifyPropertyChanged(nameof(Scale));
+            NotifyPropertyChanged(nameof(ScaleBarError));
         }
 
         public void SetSegmentedSheetName(SegmentedSheetName newSegmentedFileName)
@@ -582,7 +594,7 @@ namespace SCaddins.ExportManager
 
         public override string ToString()
         {
-#if REVIT2022
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
             string printSetting = SegmentedFileName.Name;
 #endif
 
@@ -607,7 +619,8 @@ namespace SCaddins.ExportManager
                 "    SheetRevision={17}," + Environment.NewLine +
                 "    SheetRevisionDate={18}," + Environment.NewLine +
                 "    SheetRevisionDescription={19}," + Environment.NewLine +
-                "    ExportDir={20}";
+                "    ForceRasterPrint={20}," + Environment.NewLine +
+                "    ExportDir={21}";
             return string.Format(
                 CultureInfo.CurrentCulture,
                 s,
@@ -631,6 +644,7 @@ namespace SCaddins.ExportManager
                 sheetRevision,
                 sheetRevisionDate,
                 sheetRevisionDescription,
+                ForceRasterPrint,
                 ExportDirectory);
         }
 
@@ -711,7 +725,7 @@ namespace SCaddins.ExportManager
             }
             appearsInSheetList = this.Sheet.get_Parameter(BuiltInParameter.SHEET_SCHEDULED).AsInteger() == 1;
             pageSize = PrintSettings.GetSheetSizeAsString(this);
-#if !REVIT2022
+#if !REVIT2022 && !REVIT2023 && !REVIT2024 || REVIT2025
             printSetting = PrintSettings.GetPrintSettingByName(doc, pageSize, forceRasterPrint);
             if (printSetting == null)
             {
@@ -719,7 +733,7 @@ namespace SCaddins.ExportManager
             }
 #endif
             verified = true;
-#if !REVIT2022
+#if !REVIT2022 && !REVIT2023 && !REVIT2024 && !REVIT2025
             ValidPrintSettingIsAssigned = printSetting != null;
 #else
             ValidPrintSettingIsAssigned = true;
@@ -754,7 +768,7 @@ namespace SCaddins.ExportManager
             pageSize = string.Empty;
             id = viewSheet.Id;
             ForceDate = scx.ForceRevisionToDateString;
-            forceRasterPrint = UseRasterPrinting(Manager.ForceRasterPrintParameterName);
+            ForceRasterPrint = UseRasterPrinting(Settings1.Default.UseRasterPrinterParameter);
             useDateForEmptyRevisions = scx.UseDateForEmptyRevisions;
             UpdateRevision(false);
             SetExportName();
@@ -762,16 +776,15 @@ namespace SCaddins.ExportManager
 
         private bool UseRasterPrinting(string parameterName)
         {
-            bool result = false;
             if (!string.IsNullOrEmpty(parameterName))
             {
-                var parameters = sheet.GetParameters(parameterName);
-                if (parameters.Count == 1)
+                Parameter parameter = this.sheet.LookupParameter(parameterName);
+                if (parameter != null)
                 {
-                    result = parameters[0].HasValue && parameters[0].StorageType == StorageType.Integer && parameters[0].AsInteger() == 1;
+                    return parameter.StorageType == StorageType.Integer && parameter.AsInteger() == 1;
                 }
             }
-            return result;
+            return false;
         }
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
@@ -784,7 +797,7 @@ namespace SCaddins.ExportManager
 
         private string PopulateSegmentedFileName()
         {
-#if REVIT2022
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
             var opts = this.SegmentedFileName.PDFExportOptions;
             if (opts != null)
             {
@@ -796,7 +809,7 @@ namespace SCaddins.ExportManager
 
         private void SetExportName()
         {
-#if REVIT2022
+#if REVIT2022 || REVIT2023 || REVIT2024 || REVIT2025
             sheetRevision = sheet.get_Parameter(
                     BuiltInParameter.SHEET_CURRENT_REVISION).AsString();
 #else

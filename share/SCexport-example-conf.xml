@@ -38,8 +38,7 @@
     <!--This is the first scheme. The first is the default-->
     <FilenameScheme name="Architectural">
       <Format>$projectNumber-$sheetNumber[$sheetRevision] - $sheetDescription</Format> <!--USE FOR REVIT 2021 AND EARLIER-->
-      <PDFNamingRule>SC-PDF</PDFNamingRule> <!--USE FOR REVIT 2022 AND LATER-->
-      <DWGNamingRule>SC-DWG</DWGNamingRule>  <!--USE FOR REVIT 2022 AND LATER, WILL USE PdfNamingRule IF NOT SET-->
+      <PDFNamingRule>SC-PDF</PDFNamingRule> <!--USE FOR REVIT 2022 AND LATER, will use PDF export setup of the same name from whithin Revit-->
     </FilenameScheme>
     
     <!--Tag pdf's after export-->
@@ -94,16 +93,16 @@
     -->
     <PostExportHook name="convertToPng">
         <Command>C:\Temp\createPNG.bat</Command>
-        <Args>$exportDir\$fullExportName.$fileExtension</Args>
-        <SupportedFileExtension>pdf</SupportedFileExtension>
+        <Args>$exportDir\$fullExportName$fileExtension</Args>
+        <SupportedFileExtension>.pdf</SupportedFileExtension>
     </PostExportHook>
     
     
     <!--simple hook to rename dwg files with a _DWG suffix-->
     <PostExportHook name="aconexDWGSuffix">
         <Command>cmd.exe</Command>
-        <Args> /C RENAME "$exportDir\$fullExportName.$fileExtension" "$fullExportName_DWG.$fileExtension"</Args>
-        <SupportedFileExtension>dwg</SupportedFileExtension>
+        <Args> /C RENAME "$exportDir\$fullExportName$fileExtension" "$fullExportName_DWG$fileExtension"</Args>
+        <SupportedFileExtension>.dwg</SupportedFileExtension>
     </PostExportHook>
       
     <!--
@@ -112,8 +111,8 @@
     -->
     <PostExportHook name="watermark">
         <Command>"C:\Program Files (x86)\PDFtk Server\bin\pdftk.exe"</Command>
-        <Args> "$exportDir\$fullExportName.$fileExtension" background "$exportDir\watermark.pdf" output "$exportDir\$fullExportName-WM.$fileExtension"</Args>
-        <SupportedFileExtension>pdf</SupportedFileExtension>
+        <Args> "$exportDir\$fullExportName$fileExtension" background "$exportDir\watermark.pdf" output "$exportDir\$fullExportName-WM$fileExtension"</Args>
+        <SupportedFileExtension>.pdf</SupportedFileExtension>
     </PostExportHook>
     
 </SCexport>

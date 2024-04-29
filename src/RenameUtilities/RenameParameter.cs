@@ -22,54 +22,31 @@ namespace SCaddins.RenameUtilities
 
     public class RenameParameter
     {
-        public RenameParameter(Parameter parameter, BuiltInCategory category)
+        public RenameParameter(Parameter parameter, BuiltInCategory category, object obj, RenameTypes renameType)
         {
+            this.RenameType = renameType;
             this.Parameter = parameter;
             this.Category = category;
-            this.Type = null;
-            this.Family = null;
-            this.Group = null;
-            this.Name = parameter.Definition.Name;
+            this.Object = obj;
+            switch (renameType)
+            {
+                case RenameTypes.Doors:
+                case RenameTypes.ByCategory:
+                    this.Name = parameter.Definition.Name;
+                    break;
+                case RenameTypes.Text:
+                    this.Name = "Text";
+                    break;
+                default:
+                    this.Name = "Name";
+                    break;
+            }
         }
 
-        public RenameParameter(Parameter parameter, Type t)
+        public RenameTypes RenameType
         {
-            this.Parameter = parameter;
-            this.Type = t;
-            this.Family = null;
-            this.Group = null;
-            this.Category = BuiltInCategory.INVALID;
-            this.Name = parameter.Definition.Name;
-        }
-
-        public RenameParameter(BuiltInCategory category)
-        {
-            this.Parameter = null;
-            this.Category = category;
-            this.Family = null;
-            this.Group = null;
-            this.Type = null;
-            this.Name = "Text";
-        }
-
-        public RenameParameter(Family family)
-        {
-            this.Parameter = null;
-            this.Category = BuiltInCategory.INVALID;
-            this.Type = null;
-            this.Family = family;
-            this.Group = null;
-            this.Name = "Name";
-        }
-
-        public RenameParameter(Autodesk.Revit.DB.GroupType group)
-        {
-            this.Parameter = null;
-            this.Category = BuiltInCategory.INVALID;
-            this.Type = null;
-            this.Family = null;
-            this.Group = group;
-            this.Name = "Name";
+            get;
+            private set;
         }
 
         public BuiltInCategory Category
@@ -84,25 +61,13 @@ namespace SCaddins.RenameUtilities
             set;
         }
 
-        public Family Family
-        {
-            get;
-            private set;
-        }
-
-        public Autodesk.Revit.DB.GroupType Group
+        public object Object
         {
             get;
             private set;
         }
 
         public Parameter Parameter
-        {
-            get;
-            private set;
-        }
-
-        public Type Type
         {
             get;
             private set;

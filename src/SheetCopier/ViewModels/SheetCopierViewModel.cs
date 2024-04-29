@@ -104,11 +104,11 @@ namespace SCaddins.SheetCopier.ViewModels
 
         public bool CustomSheetParameterThreeIsVisible => copyManager.CustomSheetParametersThree.Count > 1;
 
-        public string PrimaryCustomSheetParameterName => copyManager.PrimaryCustomSheetParameterName;
+        public string PrimaryCustomSheetParameterName => SheetCopierManager.PrimaryCustomSheetParameterName;
 
-        public string SecondaryCustomSheetParameterName => copyManager.SecondaryCustomSheetParameterName;
+        public string SecondaryCustomSheetParameterName => SheetCopierManager.SecondaryCustomSheetParameterName;
 
-        public string TertiaryCustomSheetParameterName => copyManager.TertiaryCustomSheetParameterName;
+        public string TertiaryCustomSheetParameterName => SheetCopierManager.TertiaryCustomSheetParameterName;
 
         public string PrimaryCustomSheetParameterColumnHeader => PrimaryCustomSheetParameterName.Replace("_", "__");
 
@@ -220,7 +220,7 @@ namespace SCaddins.SheetCopier.ViewModels
         public void AddSheets()
         {
             var vm = new ViewSelectionViewModel(copyManager);
-            bool? result = SCaddinsApp.WindowManager.ShowDialog(vm, null, ViewSelectionViewModel.DefaultWindowSettings);
+            bool? result = SCaddinsApp.WindowManager.ShowDialogAsync(vm, null, ViewSelectionViewModel.DefaultWindowSettings);
             if (result.HasValue && result.Value)
             {
                 AddSheets(vm.SelectedViews);
@@ -269,7 +269,7 @@ namespace SCaddins.SheetCopier.ViewModels
         public void Go()
         {
             copyManager.CreateSheets();
-            TryClose(true);
+            TryCloseAsync(true);
         }
 
         public void RemoveSelectedViews()

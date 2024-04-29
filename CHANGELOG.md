@@ -1,5 +1,48 @@
 # SCaddins Revision Log #
 
+# 24.2.0 #
+
+#### NEW ####
+
+- Remove Revit 2018 and 2019 support.
+- Add hatch from template option to Hatch Editor.
+- Add option to increment viewport detail number [Increment Tool]
+- New Grid Manager tool.
+- New Installer
+
+# 24.1.1 #
+
+#### FIXES ####
+
+- Fix force raster print option in SCexport.
+- Update WIX
+- Clear rename candidates in rename tool when catergory is changed.
+
+# 24.1.0 #
+
+#### NEW ####
+
+- View filters added to Rename.
+- View Templates added to Rename.
+- Highlight invlalid scalebars in SCexport
+
+#### FIXES ####
+
+- Allow empty parameters in SCexport export names(don't crash).
+- Fixed view set creation and loading [SCexport] in Revit 2024
+- Sort parameters in Rename.
+= Sort hatches in Hatch Editor.
+- Don't enable post export hook if script is not found.
+
+# 24.0.0 #
+
+#### NEW ####
+
+- Initial Revit Build 2024.
+- Add PDF24 support
+- Filter "Appears On Schedule" column in SCexport.
+- Add post export hook settings to Revit project information.
+
 # 23.0.1 #
 
 #### FIXES ####
@@ -10,7 +53,7 @@
 
 #### NEW ####
 
-- Initial Revit Build 2022.
+- Initial Revit Build 2023.
 - Add third (tertiary] custom sheet parameter to SheetCopier.
 - Don't enable printing if printer is not found. [SCexport]
 - Give warning message if user decides to disable sheet verification [SCeport]
